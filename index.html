@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ábrelo!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;1,9..144,400&family=Nunito:wght@400;600&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #fff5f5;
+    --card: #fffafa;
+    --ink: #3a2233;
+    --soft: #6d4a5f;
+    --rose: #c24d6b;
+    --blush: #f4cfd6;
+    --line: #ecc3cb;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: radial-gradient(120% 80% at 50% 0%, #ffe3e8 0%, var(--paper) 55%, #fbe9ee 100%) fixed;
+    color: var(--ink);
+    font-family: "Nunito", system-ui, sans-serif;
+    line-height: 1.8;
+    padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0);
+  }
+
+  /* progreso */
+  .progress { position: fixed; top: 0; left: 0; right: 0; height: 4px; background: transparent; z-index: 20; }
+  .progress i { display: block; height: 100%; width: 0; background: var(--rose); transition: width .15s linear; }
+  .pct { position: fixed; top: 12px; right: 14px; font-size: 13px; color: var(--soft); z-index: 20; font-variant-numeric: tabular-nums; }
+
+  /* portada */
+  .cover { min-height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 32px 24px; gap: 8px; }
+  .envelope { font-size: 84px; line-height: 1; animation: float 3.2s ease-in-out infinite; }
+  @keyframes float { 50% { transform: translateY(-10px) rotate(-3deg); } }
+  h1 { font-family: "Fraunces", serif; font-weight: 500; font-size: clamp(40px, 9vw, 64px); margin: 12px 0 0; letter-spacing: -.01em; }
+  .sub { font-family: "Fraunces", serif; font-style: italic; color: var(--soft); font-size: 19px; margin: 0 0 24px; }
+  .open {
+    border: 0; cursor: pointer; font: inherit; font-weight: 600; color: #fff; background: var(--rose);
+    padding: 12px 28px; border-radius: 999px; font-size: 16px;
+    transition: transform .15s ease, background .15s ease;
+  }
+  .open:hover { background: #a93d59; transform: translateY(-1px); }
+
+  /* carta */
+  .letter { max-width: 620px; margin: 0 auto; padding: 0 22px 120px; }
+  .sheet {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: clamp(28px, 6vw, 56px);
+    box-shadow: 0 18px 40px -22px rgba(120, 40, 70, .35);
+  }
+  .sheet p { margin: 0 0 1.25em; font-family: "Fraunces", serif; font-size: 18.5px; line-height: 1.85; }
+  .sheet .greet { font-size: 24px; font-style: italic; color: var(--rose); }
+  .photo { margin: 32px 0; text-align: center; }
+  .photo img { max-width: 100%; max-height: 460px; border-radius: 4px; border: 8px solid #fff; box-shadow: 0 10px 24px -12px rgba(0,0,0,.35); transform: rotate(-1.2deg); }
+  .sign { font-family: "Caveat", cursive; font-size: 30px; color: var(--rose); text-align: right; margin: 8px 0 0; line-height: 1.3; }
+  .sign span { display: block; }
+
+  /* edición */
+  .bar {
+    position: fixed; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 30;
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;
+  }
+  .bar button {
+    border: 1px solid var(--line); background: #fff; color: var(--ink); font: inherit; font-size: 14px; font-weight: 600;
+    padding: 10px 16px; border-radius: 999px; cursor: pointer; box-shadow: 0 6px 16px -8px rgba(0,0,0,.3);
+  }
+  .bar button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .bar .extra { display: none; }
+  body.editing .bar .extra { display: inline-block; }
+  body.editing [data-edit] { outline: 2px dashed var(--rose); outline-offset: 4px; border-radius: 3px; cursor: text; }
+  body.editing [data-edit]:focus { outline-style: solid; background: #fff0f3; }
+  .hint { display: none; position: fixed; left: 50%; transform: translateX(-50%); top: 38px; background: var(--ink); color: #fff; font-size: 13px; padding: 8px 14px; border-radius: 8px; z-index: 25; width: max-content; max-width: 90vw; text-align: center; }
+  body.editing .hint { display: block; }
+
+  @media (prefers-reduced-motion: reduce) { .envelope { animation: none; } html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+  <div class="progress"><i id="bar"></i></div>
+  <div class="pct" id="pct">0%</div>
+  <div class="hint">Modo edición: haz clic en cualquier texto y escribe. Ya puedes cambiar la foto.</div>
+
+  <section class="cover">
+    <div class="envelope">💌</div>
+    <h1 data-edit>Ábrelo!</h1>
+    <p class="sub" data-edit>Para el amor que hace hogar en mi corazón</p>
+    <button class="open" id="openBtn">Abrir carta</button>
+  </section>
+
+  <main class="letter" id="letter">
+    <article class="sheet">
+      <p class="greet" data-edit>Mi amor,</p>
+      <p data-edit>Desde que llegaste a mi vida, mis días tienen una luz distinta. En tu sonrisa encuentro mi lugar favorito y en tus abrazos, la paz que siempre estaba buscando.</p>
+      <p data-edit>A tu lado aprendí que el amor también vive en los detalles: en una mirada que lo dice todo, en una conversación que se alarga sin darnos cuenta y en esos momentos sencillos que terminan convirtiéndose en mis recuerdos favoritos.</p>
+      <p data-edit>Admiro tu forma de ser, tu manera de iluminar mis días y la ternura que llevas contigo. Me haces querer ser mejor, soñar más alto y disfrutar cada instante como si el tiempo se detuviera cuando estamos juntos.</p>
+      <p data-edit>Te elijo hoy, mañana y en cada historia que nos quede por escribir. Quiero seguir construyendo contigo un amor lleno de confianza, risas, abrazos y promesas cumplidas. Gracias por hacer de mi mundo un lugar más bonito con solo existir.</p>
+
+      <div class="photo"><img id="foto" src="https://i.pinimg.com/736x/22/16/93/221693915545497b49634065bc732e4d.jpg" alt="Foto de recuerdo"></div>
+
+      <p class="sign"><span data-edit>Atentamente,</span><span data-edit>tu amor!</span></p>
+    </article>
+  </main>
+
+  <div class="bar" id="toolbar">
+    <button class="extra" id="fotoUrl">Foto: pegar enlace</button>
+    <button class="extra" id="fotoFile">Foto: subir archivo</button>
+    <button class="extra" id="save">Descargar HTML</button>
+    <button id="toggle">✏️ Editar</button>
+  </div>
+  <input type="file" id="fileInput" accept="image/*" hidden>
+
+<script>
+(function () {
+  var body = document.body;
+  var toggle = document.getElementById('toggle');
+  var editables = function () { return document.querySelectorAll('[data-edit]'); };
+
+  // progreso de lectura
+  function update() {
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    var p = h > 0 ? Math.min(100, Math.round(window.scrollY / h * 100)) : 0;
+    document.getElementById('bar').style.width = p + '%';
+    document.getElementById('pct').textContent = p + '%';
+  }
+  window.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  update();
+
+  document.getElementById('openBtn').addEventListener('click', function () {
+    document.getElementById('letter').scrollIntoView({ behavior: 'smooth' });
+  });
+
+  // modo edición
+  function setEditing(on) {
+    body.classList.toggle('editing', on);
+    toggle.classList.toggle('on', on);
+    toggle.textContent = on ? '✓ Listo' : '✏️ Editar';
+    editables().forEach(function (el) {
+      if (on) el.setAttribute('contenteditable', 'true'); else el.removeAttribute('contenteditable');
+    });
+    update();
+  }
+  toggle.addEventListener('click', function () { setEditing(!body.classList.contains('editing')); });
+
+  // pegar texto sin formato
+  document.addEventListener('paste', function (e) {
+    var t = e.target.closest && e.target.closest('[data-edit]');
+    if (!t) return;
+    e.preventDefault();
+    var text = (e.clipboardData || window.clipboardData).getData('text/plain');
+    document.execCommand('insertText', false, text);
+  });
+
+  // foto
+  document.getElementById('fotoUrl').addEventListener('click', function () {
+    var u = prompt('Pega el enlace de la nueva foto:');
+    if (u) document.getElementById('foto').src = u.trim();
+  });
+  var fileInput = document.getElementById('fileInput');
+  document.getElementById('fotoFile').addEventListener('click', function () { fileInput.click(); });
+  fileInput.addEventListener('change', function () {
+    var f = fileInput.files[0];
+    if (!f) return;
+    var r = new FileReader();
+    r.onload = function () { document.getElementById('foto').src = r.result; };
+    r.readAsDataURL(f);
+  });
+
+  // descargar versión editada
+  document.getElementById('save').addEventListener('click', function () {
+    var was = body.classList.contains('editing');
+    setEditing(false);
+    var html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    var blob = new Blob([html], { type: 'text/html' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'carta-especial.html';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    if (was) setEditing(true);
+  });
+})();
+</script>
+</body>
+</html>
